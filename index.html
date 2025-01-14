@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,6 +13,11 @@
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4">
 
 <main class="max-w-xl w-full bg-white rounded-xl shadow-xl p-8">
+  <!-- Progress Bar at the Top -->
+  <div class="w-full bg-gray-300 h-2 rounded mb-4">
+    <div id="progress-bar" class="bg-green-500 h-2 rounded" style="width: 0%;"></div>
+  </div>
+
   <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
     What Should I Eat Tonight? 🍽️
   </h1>
@@ -22,7 +27,7 @@
       <p class="text-lg mb-4">Let's figure out your perfect dinner!</p>
       <div class="space-y-6">
 
-        <!-- Dietary Restrictions -->
+        <!-- Dietary Restrictions (Step 1) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg">
           <p class="mb-3 font-medium">Any dietary restrictions? (Select all that apply)</p>
           <div class="flex flex-wrap gap-2 justify-center">
@@ -70,7 +75,7 @@
           </button>
         </div>
 
-        <!-- Hunger Level -->
+        <!-- Hunger Level (Step 2) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">What's your hunger level?</p>
           <button
@@ -93,7 +98,7 @@
           </button>
         </div>
 
-        <!-- Craving -->
+        <!-- Craving (Step 3) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">What are you craving?</p>
           <button
@@ -122,7 +127,7 @@
           </button>
         </div>
 
-        <!-- Budget -->
+        <!-- Budget (Step 4) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">What's your budget?</p>
           <button
@@ -145,7 +150,7 @@
           </button>
         </div>
 
-        <!-- Effort -->
+        <!-- Effort (Step 5) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">How much effort are you willing to put in?</p>
           <button
@@ -208,14 +213,11 @@
       </div>
     </div>
 
-    <!-- Shopping List Section (NEW) -->
+    <!-- Shopping List Section -->
     <div id="shopping-list-section" class="hidden space-y-4 mb-6">
       <h3 class="text-xl font-semibold">Shopping List</h3>
       <ul id="shopping-list-items" class="list-disc pl-5"></ul>
     </div>
-
-    <!-- Nearby Options turned off -->
-    <!-- <div id="nearby-options" class="space-y-4 mb-6"> ... </div> -->
 
     <button
       onclick="resetQuiz()"
@@ -1228,7 +1230,18 @@ const recipes = {
 document.addEventListener('DOMContentLoaded', function() {
   const questions = Array.from(document.querySelectorAll('.question-card'));
 
-  // Toggle dietary
+  // Progress function
+  function updateProgressBar() {
+    // We have 5 question cards in total (in your code). Or use questions.length if they’re all in the same array
+    const totalSteps = questions.length;
+    // currentQuestionIndex is 0-based, but we want how many are done
+    const percent = ((currentQuestionIndex + 1) / totalSteps) * 100;
+    document.getElementById('progress-bar').style.width = percent + '%';
+  }
+ // Show the first step’s progress
+  updateProgressBar();
+
+  // Toggle multiple diet restrictions
   window.toggleDiet = function(diet, e) {
     const button = e.target;
     const isSelected = button.classList.contains('ring-2');
@@ -1270,6 +1283,8 @@ document.addEventListener('DOMContentLoaded', function() {
       questions[currentQuestionIndex].classList.add('hidden');
       currentQuestionIndex++;
       questions[currentQuestionIndex].classList.remove('hidden');
+      // Update progress bar
+      updateProgressBar();
     }
   };
 
@@ -1293,46 +1308,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Show results
   window.showResult = function() {
-  document.getElementById('question-container').classList.add('hidden');
-  const result = document.getElementById('result');
-  result.classList.remove('hidden');
+    document.getElementById('question-container').classList.add('hidden');
+    const result = document.getElementById('result');
+    result.classList.remove('hidden');
 
-  // Get suggestion
-  const suggestion = getFoodSuggestion();
+    // Get suggestion
+    const suggestion = getFoodSuggestion();
 
-  // Update UI
-  document.getElementById('food-suggestion').textContent = suggestion.emoji || '🍽️';
-  document.getElementById('description').innerHTML = `
-    <strong>${suggestion.name}</strong><br>${suggestion.description}
-  `;
+    // Update UI with suggestion
+    document.getElementById('food-suggestion').textContent = suggestion.emoji || '🍽️';
+    document.getElementById('description').innerHTML = `
+      <strong>${suggestion.name}</strong><br>${suggestion.description}
+    `;
 
-  // Remove any existing Shopping List button to avoid duplicates
-  const oldBtn = document.getElementById('shopping-list-btn');
-  if (oldBtn) {
-    oldBtn.remove();
-  }
+    // Remove any old Shopping List button to avoid duplicates
+    const oldBtn = document.getElementById('shopping-list-btn');
+    if (oldBtn) oldBtn.remove();
 
-  // If there's a recipeKey (non-delivery), show recipe & add Shopping List button
-  if (suggestion.recipeKey && preferences.effort !== 'delivery') {
-    showRecipeDetails(suggestion.recipeKey);
+    // If there's a recipeKey and effort != delivery => show recipe & add button
+    if (suggestion.recipeKey && preferences.effort !== 'delivery') {
+      showRecipeDetails(suggestion.recipeKey);
 
-    const shoppingListBtn = document.createElement('button');
-    shoppingListBtn.id = 'shopping-list-btn';
-    shoppingListBtn.classList.add(
-      'px-4', 'py-2', 'bg-green-500', 'text-white',
-      'rounded', 'hover:bg-green-600', 'mt-3'
-    );
-    shoppingListBtn.textContent = 'Generate Shopping List';
-    shoppingListBtn.onclick = () => generateShoppingList(suggestion.recipeKey);
+      const shoppingListBtn = document.createElement('button');
+      shoppingListBtn.id = 'shopping-list-btn';
+      shoppingListBtn.classList.add(
+        'px-4', 'py-2', 'bg-green-500', 'text-white',
+        'rounded', 'hover:bg-green-600', 'mt-3'
+      );
+      shoppingListBtn.textContent = 'Generate Shopping List';
+      shoppingListBtn.onclick = () => generateShoppingList(suggestion.recipeKey);
 
-    document.getElementById('recommendation').appendChild(shoppingListBtn);
-  }
-};
+      document.getElementById('recommendation').appendChild(shoppingListBtn);
+    }
+  };
 
-  // The function that decides from which array to pick
+  // Multiple dietary restriction logic
   window.getFoodSuggestion = function() {
     const { dietary, hunger, craving, budget, effort } = preferences;
 
+    // Decide which array to use
     let arrayToSearch;
     if (effort === 'delivery') {
       arrayToSearch = deliveryOptions;
@@ -1342,18 +1356,21 @@ document.addEventListener('DOMContentLoaded', function() {
       arrayToSearch = chefModeOptions;
     }
 
-    const primaryDiet = dietary[0] || 'none';
-
     const filtered = arrayToSearch.filter(item => {
-      const dietOk = (primaryDiet === 'none')
-        || item.dietary.includes(primaryDiet)
-        || (primaryDiet !== 'none' && item.dietary.includes('none'));
+      // Handle diets
+      if (dietary.length > 0 && !dietary.includes('none')) {
+        // Must have all selected diets
+        const allDietsOk = dietary.every(d => item.dietary.includes(d));
+        if (!allDietsOk) return false;
+      }
+      // Hunger
+      if (!item.hunger.includes(hunger)) return false;
+      // Craving
+      if (!item.craving.includes(craving)) return false;
+      // Budget
+      if (!item.budget.includes(budget)) return false;
 
-      const cravingOk = item.craving.includes(craving);
-      const budgetOk  = item.budget.includes(budget);
-      const hungerOk  = item.hunger.includes(hunger);
-
-      return dietOk && cravingOk && budgetOk && hungerOk;
+      return true;
     });
 
     if (filtered.length > 0) {
@@ -1400,29 +1417,27 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cooking-tips').textContent = recipe.tips || '';
   };
 
-  // NEW: Generate Shopping List
+  // Generate Shopping List
   window.generateShoppingList = function(recipeKey) {
-  // If something goes wrong or no recipe found
-  if (!recipes[recipeKey]) return;
+    if (!recipes[recipeKey]) return;
 
-  // Show the shopping list section
-  const listSection = document.getElementById('shopping-list-section');
-  listSection.classList.remove('hidden');
+    // Show shopping list section
+    const listSection = document.getElementById('shopping-list-section');
+    listSection.classList.remove('hidden');
 
-  // Grab the ingredients
-  const { ingredients } = recipes[recipeKey];
+    const { ingredients } = recipes[recipeKey];
 
-  // Populate them in a list with checkboxes
-  const listContainer = document.getElementById('shopping-list-items');
-  listContainer.innerHTML = ingredients.map((item, i) => `
-    <li>
-      <label class="inline-flex items-center space-x-2">
-        <input type="checkbox" class="form-checkbox h-4 w-4" />
-        <span>${item}</span>
-      </label>
-    </li>
-  `).join('');
-};
+    // Render each ingredient with checkboxes
+    const listContainer = document.getElementById('shopping-list-items');
+    listContainer.innerHTML = ingredients.map(item => `
+      <li>
+        <label class="inline-flex items-center space-x-2">
+          <input type="checkbox" class="form-checkbox h-4 w-4" />
+          <span>${item}</span>
+        </label>
+      </li>
+    `).join('');
+  };
 
   // Reset quiz
   window.resetQuiz = function() {
@@ -1452,6 +1467,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('question-container').classList.remove('hidden');
     document.getElementById('recipe-section').classList.add('hidden');
     document.getElementById('shopping-list-section').classList.add('hidden');
+
+    // Reset progress bar
+    document.getElementById('progress-bar').style.width = '0%';
   };
 });
 </script>
