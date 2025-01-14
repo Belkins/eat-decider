@@ -11,6 +11,7 @@
   />
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4">
+
 <main class="max-w-xl w-full bg-white rounded-xl shadow-xl p-8">
   <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
     What Should I Eat Tonight? 🍽️
@@ -20,11 +21,10 @@
     <div class="text-center mb-6">
       <p class="text-lg mb-4">Let's figure out your perfect dinner!</p>
       <div class="space-y-6">
+
         <!-- Dietary Restrictions -->
         <div class="question-card bg-gray-50 p-4 rounded-lg">
-          <p class="mb-3 font-medium">
-            Any dietary restrictions? (Select all that apply)
-          </p>
+          <p class="mb-3 font-medium">Any dietary restrictions? (Select all that apply)</p>
           <div class="flex flex-wrap gap-2 justify-center">
             <button
               onclick="toggleDiet('vegetarian', event)"
@@ -70,23 +70,23 @@
           </button>
         </div>
 
-        <!-- Hunger Level (not used in dictionary lookups, purely informational if needed) -->
+        <!-- Hunger Level -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">What's your hunger level?</p>
           <button
-            onclick="addPreference('hunger', 3, event)"
+            onclick="addPreference('hunger', 'starving', event)"
             class="px-4 py-2 bg-red-100 rounded hover:bg-red-200 mr-2"
           >
             Starving! 🐺
           </button>
           <button
-            onclick="addPreference('hunger', 2, event)"
+            onclick="addPreference('hunger', 'quite-hungry', event)"
             class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200 mr-2"
           >
             Quite Hungry 😋
           </button>
           <button
-            onclick="addPreference('hunger', 1, event)"
+            onclick="addPreference('hunger', 'peckish', event)"
             class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
           >
             Just Peckish 🐦
@@ -145,23 +145,23 @@
           </button>
         </div>
 
-        <!-- Effort (not used for dictionary key, only for deciding recipe display) -->
+        <!-- Effort -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">How much effort are you willing to put in?</p>
           <button
-            onclick="addPreference('effort', 'none', event)"
+            onclick="addPreference('effort', 'delivery', event)"
             class="px-4 py-2 bg-blue-100 rounded hover:bg-blue-200 mr-2"
           >
             Delivery Only 🛵
           </button>
           <button
-            onclick="addPreference('effort', 'some', event)"
+            onclick="addPreference('effort', 'easy', event)"
             class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200 mr-2"
           >
             Quick & Easy 🥪
           </button>
           <button
-            onclick="addPreference('effort', 'lots', event)"
+            onclick="addPreference('effort', 'chef', event)"
             class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
           >
             Chef Mode 👨‍🍳
@@ -221,87 +221,662 @@
 </main>
 
 <script>
-/* Updated Food suggestion database using only
-   'dietary-craving-budget' as the key */
-const foodSuggestions = {
-  // Vegetarian
-  'vegetarian-savory-high': {
-    emoji: '🍝',
-    name: 'Gourmet Mushroom Risotto',
-    description: 'Creamy, rich risotto with wild mushrooms and truffle oil.'
-  },
-  'vegetarian-savory-medium': {
-    emoji: '🥘',
-    name: 'Vegetable Paella',
-    description: 'Spanish-inspired rice dish with seasonal vegetables.'
-  },
-  'vegetarian-spicy-medium': {
-    emoji: '🍛',
-    name: 'Vegetable Curry',
-    description: 'Aromatic curry with coconut milk and fresh vegetables.'
-  },
-  'vegetarian-fresh-medium': {
-    emoji: '🥗',
-    name: 'Mediterranean Bowl',
-    description: 'Fresh vegetables, falafel, and hummus over quinoa.'
-  },
-  // Add more combos as needed, e.g. vegetarian-savory-low, etc.
-
-  // Vegan
-  'vegan-savory-high': {
-    emoji: '🌱',
-    name: 'Jackfruit "Crab" Cakes',
-    description: 'Plant-based cakes with fresh herbs and vegan remoulade.'
-  },
-  'vegan-comfort-medium': {
-    emoji: '🍲',
-    name: 'Coconut Lentil Stew',
-    description: 'Hearty stew with red lentils and warming spices.'
-  },
-
-  // No restrictions
-  'none-savory-high': {
-    emoji: '🍕',
-    name: 'Gourmet Pizza',
-    description: 'Artisanal pizza with premium toppings!'
-  },
-  'none-savory-medium': {
-    emoji: '🍔',
-    name: 'Gourmet Burger',
-    description: 'Hand-crafted burger with all the fixings.'
-  },
-  'none-spicy-high': {
-    emoji: '🍜',
-    name: 'Ramen',
-    description: 'Authentic ramen with fresh noodles and premium toppings.'
-  },
-  'none-comfort-medium': {
-    emoji: '🥘',
-    name: 'Mac & Cheese',
-    description: 'Creamy comfort food with a crispy top.'
-  },
-
-  // Default fallback options for each dietary restriction
-  'vegetarian-default': {
-    emoji: '🥗',
-    name: 'Mixed Vegetable Bowl',
-    description: 'A satisfying mix of grains, vegetables, and plant-based protein.'
-  },
-  'vegan-default': {
-    emoji: '🌱',
-    name: 'Buddha Bowl',
-    description: 'Nutritious bowl with quinoa, roasted vegetables, and tahini dressing.'
-  },
-  'none-default': {
-    emoji: '🍽️',
-    name: "Chef's Special",
-    description: 'A perfectly balanced meal based on your preferences!'
-  }
+/* -------------------------------------------------------
+   1) State
+------------------------------------------------------- */
+let preferences = {
+  dietary: [],
+  hunger: null,
+  craving: null,
+  budget: null,
+  effort: null
 };
+let currentQuestionIndex = 0;
 
-/* Our big recipe database (same as before).
-   Key is a lowercased, hyphenated version of the dish name. */
+/* -------------------------------------------------------
+   2) Delivery Options
+------------------------------------------------------- */
+const deliveryOptions = [
+  {
+    name: 'Local Pizzeria',
+    description: 'Delicious pizza delivered hot to your door!',
+    emoji: '🍕',
+    dietary: ['none'],
+    craving: ['savory'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry', 'peckish'],
+    recipeKey: null
+  },
+  {
+    name: 'Vegan Thai Delivery',
+    description: 'Spicy curry or fresh spring rolls delivered fast!',
+    emoji: '🌱',
+    dietary: ['vegan', 'vegetarian'],
+    craving: ['spicy', 'fresh'],
+    budget: ['medium', 'high'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: null
+  },
+  {
+    name: 'Salad Bar To-Go',
+    description: 'Custom fresh salad with gluten-free and dairy-free options.',
+    emoji: '🥗',
+    dietary: ['vegetarian', 'vegan', 'gluten-free', 'dairy-free'],
+    craving: ['fresh', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: null
+  },
+  {
+    name: 'Indian Curry Express',
+    description: 'Rich, aromatic curries delivered to satisfy big cravings!',
+    emoji: '🥘',
+    dietary: ['none', 'dairy-free'],
+    craving: ['savory', 'spicy', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: null
+  },
+  {
+    name: 'Sushi Delivery',
+    description: 'Fresh sushi rolls, sashimi, and veggie options, all at your door.',
+    emoji: '🍣',
+    dietary: ['none', 'gluten-free', 'dairy-free'],
+    craving: ['fresh', 'savory'],
+    budget: ['medium', 'high'],
+    hunger: ['peckish', 'quite-hungry', 'starving'],
+    recipeKey: null
+  },
+  {
+    name: 'Burrito Bros',
+    description: 'Burritos with vegan or vegetarian fillings plus gluten-free wraps!',
+    emoji: '🌯',
+    dietary: ['none', 'vegan', 'vegetarian', 'gluten-free', 'dairy-free'],
+    craving: ['comfort', 'savory', 'spicy'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: null
+  },
+  {
+    name: 'Midnight Tacos',
+    description: 'Perfect for a late-night craving, with meat or veggie options.',
+    emoji: '🌮',
+    dietary: ['none', 'vegetarian'],
+    craving: ['spicy', 'savory', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: null
+  },
+  {
+    name: 'GF Pasta Palace',
+    description: 'Pasta dishes with certified gluten-free noodles and sauces.',
+    emoji: '🍝',
+    dietary: ['gluten-free', 'none', 'dairy-free'],
+    craving: ['savory', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: null
+  },
+  {
+    name: 'Vegan Comfort Diner',
+    description: 'Burgers, fries, and hearty comfort meals, all vegan.',
+    emoji: '🍔',
+    dietary: ['vegan', 'vegetarian'],
+    craving: ['comfort', 'savory'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: null
+  },
+  {
+    name: 'Healthy Smoothie Bar',
+    description: 'Fresh smoothie bowls, perfect for a light meal or snack.',
+    emoji: '🍓',
+    dietary: ['vegan', 'vegetarian', 'dairy-free'],
+    craving: ['fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: null
+  }
+];
+
+/* -------------------------------------------------------
+   3) Quick & Easy Options
+------------------------------------------------------- */
+const quickAndEasyOptions = [
+  {
+    name: 'Avocado Toast',
+    description: 'Simple, fresh, and ready in minutes.',
+    emoji: '🥑',
+    dietary: ['vegetarian', 'vegan'],
+    craving: ['fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish'],
+    recipeKey: 'avocado-toast'
+  },
+  {
+    name: 'Egg & Cheese Sandwich',
+    description: 'Hearty, savory sandwich to fill you up fast.',
+    emoji: '🍳',
+    dietary: ['vegetarian'],
+    craving: ['savory', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'egg-cheese-sandwich'
+  },
+  {
+    name: 'Quick Veggie Stir-Fry',
+    description: 'Colorful veggies with an easy sauce over rice.',
+    emoji: '🍛',
+    dietary: ['vegetarian', 'vegan'],
+    craving: ['fresh', 'spicy', 'comfort', 'savory'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry', 'peckish'],
+    recipeKey: 'stir-fry'
+  },
+  {
+    name: 'Basic Burger',
+    description: 'Grill a burger patty and you’re set.',
+    emoji: '🍔',
+    dietary: ['none', 'dairy-free'],
+    craving: ['savory', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'gourmet-burger'
+  },
+  {
+    name: 'Caprese Salad',
+    description: 'Mozzarella, tomatoes, basil, and balsamic glaze in minutes.',
+    emoji: '🥗',
+    dietary: ['vegetarian'],
+    craving: ['fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: 'caprese-salad'
+  },
+  {
+    name: 'Quick Quesadilla',
+    description: 'Cheese (or vegan cheese) melted in a tortilla—fast comfort food.',
+    emoji: '🫓',
+    dietary: ['none', 'vegetarian'],
+    craving: ['comfort', 'savory'],
+    budget: ['low'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: 'quick-quesadilla'
+  },
+  {
+    name: 'Microwave Burrito',
+    description: 'Frozen or ready-made burrito zapped to perfection.',
+    emoji: '🌯',
+    dietary: ['none'],
+    craving: ['comfort', 'savory', 'spicy'],
+    budget: ['low'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'microwave-burrito'
+  },
+  {
+    name: 'Fruit & Yogurt Parfait',
+    description: 'Layer your favorite fruits, yogurt, and granola.',
+    emoji: '🍓',
+    dietary: ['vegetarian'],
+    craving: ['fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish'],
+    recipeKey: 'fruit-yogurt-parfait'
+  },
+  {
+    name: 'Hummus & Veggies',
+    description: 'Grab hummus, chop veggies—done in no time.',
+    emoji: '🥕',
+    dietary: ['vegan', 'vegetarian', 'dairy-free', 'gluten-free'],
+    craving: ['fresh'],
+    budget: ['low'],
+    hunger: ['peckish'],
+    recipeKey: 'hummus-veggies'
+  },
+  {
+    name: 'Grilled Cheese',
+    description: 'Classic melty sandwich, a warm hug in minutes.',
+    emoji: '🧀',
+    dietary: ['vegetarian'],
+    craving: ['comfort', 'savory'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'grilled-cheese'
+  },
+  {
+    name: 'Lentil Soup',
+    description: 'Protein-packed soup from canned or quick-cook lentils.',
+    emoji: '🥣',
+    dietary: ['vegan', 'vegetarian', 'dairy-free', 'gluten-free'],
+    craving: ['comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'lentil-soup'
+  },
+  {
+    name: 'Protein Wrap',
+    description: 'Wrap up grilled chicken (or tofu) with lettuce, sauce, done.',
+    emoji: '🌯',
+    dietary: ['none', 'dairy-free'],
+    craving: ['savory'],
+    budget: ['medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'protein-wrap'
+  },
+  {
+    name: 'Pasta Primavera',
+    description: 'Boil pasta, toss in veggies & sauce—an easy classic.',
+    emoji: '🍝',
+    dietary: ['vegetarian'],
+    craving: ['fresh', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'pasta-primavera'
+  },
+  {
+    name: 'Instant Oats Bowl',
+    description: 'Microwave oats with fruit, nuts, or sweeteners in minutes.',
+    emoji: '🥣',
+    dietary: ['vegetarian', 'vegan', 'dairy-free'],
+    craving: ['fresh', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: 'instant-oats-bowl'
+  }
+];
+
+/* -------------------------------------------------------
+   4) Chef Mode Options
+------------------------------------------------------- */
+const chefModeOptions = [
+  {
+    name: 'Gourmet Mushroom Risotto',
+    description: 'Creamy, rich risotto with wild mushrooms.',
+    emoji: '🍝',
+    dietary: ['vegetarian'],
+    craving: ['savory', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'gourmet-mushroom-risotto'
+  },
+  {
+    name: 'Jackfruit "Crab" Cakes',
+    description: 'Plant-based cakes with fresh herbs.',
+    emoji: '🌱',
+    dietary: ['vegan', 'vegetarian'],
+    craving: ['savory'],
+    budget: ['medium', 'high'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'jackfruit-crab-cakes'
+  },
+  {
+    name: 'Ramen',
+    description: 'Authentic ramen with fresh noodles and premium toppings.',
+    emoji: '🍜',
+    dietary: ['none', 'dairy-free'],
+    craving: ['spicy', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'ramen'
+  },
+  {
+    name: 'Mac & Cheese',
+    description: 'Creamy comfort food with a crispy top.',
+    emoji: '🥘',
+    dietary: ['vegetarian'],
+    craving: ['comfort'],
+    budget: ['low', 'medium', 'high'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'mac-and-cheese'
+  },
+  {
+    name: 'Vegetable Curry',
+    description: 'Aromatic curry with coconut milk and fresh vegetables.',
+    emoji: '🍛',
+    dietary: ['vegan', 'vegetarian', 'dairy-free'],
+    craving: ['spicy', 'comfort'],
+    budget: ['low', 'medium'],
+    hunger: ['starving', 'quite-hungry'],
+    recipeKey: 'vegetable-curry'
+  },
+  {
+    name: 'Eggplant Parmesan',
+    description: 'Layered eggplant with rich tomato sauce and cheese.',
+    emoji: '🍆',
+    dietary: ['vegetarian'],
+    craving: ['savory', 'comfort'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'eggplant-parmesan'
+  },
+  {
+    name: 'Shakshuka',
+    description: 'Eggs poached in a spiced tomato-pepper sauce.',
+    emoji: '🍳',
+    dietary: ['vegetarian'],
+    craving: ['savory', 'fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'shakshuka'
+  },
+  {
+    name: 'BBQ Jackfruit Sliders',
+    description: 'Pulled-“pork” style jackfruit on mini buns.',
+    emoji: '🍔',
+    dietary: ['vegan', 'vegetarian'],
+    craving: ['savory', 'comfort', 'spicy'],
+    budget: ['medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'bbq-jackfruit-sliders'
+  },
+  {
+    name: 'Homemade Sushi Rolls',
+    description: 'Roll your own sushi with fresh fish or veggies.',
+    emoji: '🍣',
+    dietary: ['none', 'dairy-free'],
+    craving: ['fresh'],
+    budget: ['medium', 'high'],
+    hunger: ['peckish', 'quite-hungry'],
+    recipeKey: 'homemade-sushi-rolls'
+  },
+  {
+    name: 'Falafel Platter',
+    description: 'Homemade falafel with sides of hummus and salad.',
+    emoji: '🧆',
+    dietary: ['vegan', 'vegetarian'],
+    craving: ['fresh', 'savory'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'falafel-platter'
+  },
+  {
+    name: 'Egg Fried Rice',
+    description: 'Classic stir-fry with rice, veggies, and scrambled egg.',
+    emoji: '🥢',
+    dietary: ['none'],
+    craving: ['savory'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'egg-fried-rice'
+  },
+  {
+    name: 'Baked Salmon with Lemon & Dill',
+    description: 'Simple yet flavorful dish with a zesty sauce.',
+    emoji: '🐟',
+    dietary: ['none', 'dairy-free'],
+    craving: ['fresh', 'savory'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'baked-salmon'
+  },
+  {
+    name: 'Butternut Squash Ravioli',
+    description: 'Pillowy ravioli with sweet squash filling.',
+    emoji: '🍝',
+    dietary: ['vegetarian'],
+    craving: ['comfort'],
+    budget: ['high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'butternut-ravioli'
+  },
+  {
+    name: 'Chicken Alfredo',
+    description: 'Creamy alfredo sauce with chicken and pasta.',
+    emoji: '🍗',
+    dietary: ['none'],
+    craving: ['comfort', 'savory'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'chicken-alfredo'
+  },
+  {
+    name: 'Mushroom Stroganoff',
+    description: 'Rich mushroom sauce served over noodles.',
+    emoji: '🍄',
+    dietary: ['vegetarian'],
+    craving: ['comfort', 'savory'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'mushroom-stroganoff'
+  },
+  {
+    name: 'Vegan Pad Thai',
+    description: 'Rice noodles tossed with veggies, peanuts, tangy sauce.',
+    emoji: '🍜',
+    dietary: ['vegan', 'vegetarian', 'dairy-free'],
+    craving: ['fresh', 'spicy', 'savory'],
+    budget: ['medium', 'high'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'vegan-pad-thai'
+  },
+  {
+    name: 'Stuffed Bell Peppers',
+    description: 'Peppers loaded with grains, veggies, and cheese or vegan cheese.',
+    emoji: '🌶️',
+    dietary: ['vegetarian', 'vegan', 'gluten-free'],
+    craving: ['comfort', 'fresh'],
+    budget: ['low', 'medium'],
+    hunger: ['quite-hungry', 'starving'],
+    recipeKey: 'stuffed-bell-peppers'
+  }
+];
+
+/* -------------------------------------------------------
+   5) The Recipes Object (Full)
+------------------------------------------------------- */
 const recipes = {
+  'avocado-toast': {
+    name: 'Avocado Toast',
+    prepTime: '5 minutes',
+    cookTime: '0 minutes',
+    ingredients: [
+      '2 slices bread (whole grain or gluten-free)',
+      '1 ripe avocado',
+      'Salt, pepper, lemon juice'
+    ],
+    instructions: [
+      'Toast bread to your desired crispness.',
+      'Mash avocado with salt, pepper, and lemon juice.',
+      'Spread avocado mixture on the toast and enjoy.'
+    ],
+    tips: 'Add chili flakes or sliced tomato for extra flavor.'
+  },
+  'baked-salmon': {
+    name: 'Baked Salmon with Lemon & Dill',
+    prepTime: '10 minutes',
+    cookTime: '15-20 minutes',
+    ingredients: [
+      '2 salmon fillets',
+      '1 lemon (zested & sliced)',
+      'Fresh dill (chopped)',
+      'Salt, pepper, olive oil'
+    ],
+    instructions: [
+      'Preheat oven to 400°F (200°C).',
+      'Place salmon on a foil-lined tray, drizzle with oil.',
+      'Sprinkle salt, pepper, lemon zest, and dill on top.',
+      'Arrange lemon slices over fillets.',
+      'Bake for 15-20 minutes or until salmon flakes easily.'
+    ],
+    tips: 'Try adding thinly sliced garlic or a dab of butter for extra richness.'
+  },
+  'bbq-jackfruit-sliders': {
+    name: 'BBQ Jackfruit Sliders',
+    prepTime: '20 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      '1 can young jackfruit (drained & shredded)',
+      'Your favorite BBQ sauce',
+      'Slider buns',
+      'Coleslaw or pickles (optional)'
+    ],
+    instructions: [
+      'Sauté jackfruit in a skillet with a little oil.',
+      'Add BBQ sauce, simmer until jackfruit shreds easily.',
+      'Toast slider buns if desired.',
+      'Assemble with jackfruit and optional toppings.'
+    ],
+    tips: 'Use a fork to shred any large jackfruit chunks for the best texture.'
+  },
+  'butternut-ravioli': {
+    name: 'Butternut Squash Ravioli',
+    prepTime: '30 minutes',
+    cookTime: '10-15 minutes',
+    ingredients: [
+      'Ravioli dough (homemade or store-bought sheets)',
+      '2 cups roasted butternut squash (mashed)',
+      '1/2 cup ricotta (or vegan ricotta)',
+      'Salt, pepper, nutmeg'
+    ],
+    instructions: [
+      'Mix mashed squash with ricotta, season with salt, pepper, nutmeg.',
+      'Place small scoops of filling on pasta sheets, form ravioli.',
+      'Boil ravioli in salted water 3-4 minutes, or until they float.',
+      'Serve with brown butter sage sauce or your preferred sauce.'
+    ],
+    tips: 'Roast the squash with olive oil and garlic for extra flavor.'
+  },
+  'caprese-salad': {
+    name: 'Caprese Salad',
+    prepTime: '5 minutes',
+    cookTime: '0 minutes',
+    ingredients: [
+      'Tomatoes (sliced)',
+      'Fresh mozzarella (sliced)',
+      'Fresh basil leaves',
+      'Balsamic glaze (or vinegar), olive oil, salt, pepper'
+    ],
+    instructions: [
+      'Alternate tomato and mozzarella slices on a plate.',
+      'Tuck basil leaves in between.',
+      'Drizzle with olive oil and balsamic glaze.',
+      'Sprinkle with salt and pepper.'
+    ],
+    tips: 'Use ripe, in-season tomatoes for maximum flavor.'
+  },
+  'chicken-alfredo': {
+    name: 'Chicken Alfredo',
+    prepTime: '10 minutes',
+    cookTime: '15-20 minutes',
+    ingredients: [
+      '2 chicken breasts (sliced)',
+      '8 oz fettuccine pasta',
+      '1 cup heavy cream (or half-and-half)',
+      '1 cup grated Parmesan cheese',
+      '2 tbsp butter, salt, pepper'
+    ],
+    instructions: [
+      'Cook pasta in salted water per package directions.',
+      'Sauté chicken in butter until cooked through.',
+      'Add cream and simmer, then stir in Parmesan.',
+      'Combine pasta with sauce, season with salt & pepper.'
+    ],
+    tips: 'Add a pinch of nutmeg to the sauce for subtle depth.'
+  },
+  'egg-cheese-sandwich': {
+    name: 'Egg & Cheese Sandwich',
+    prepTime: '5 minutes',
+    cookTime: '5 minutes',
+    ingredients: [
+      '1 egg',
+      '1 slice cheese',
+      '2 slices bread',
+      'Butter or oil'
+    ],
+    instructions: [
+      'Fry or scramble the egg in a pan with butter or oil.',
+      'Toast the bread lightly (optional).',
+      'Assemble with cheese and egg.'
+    ],
+    tips: 'Add spinach or tomato slices for extra nutrients.'
+  },
+  'egg-fried-rice': {
+    name: 'Egg Fried Rice',
+    prepTime: '10 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      '2 cups cooked rice (preferably chilled)',
+      '2 eggs',
+      'Mixed veggies (carrots, peas, onions)',
+      'Soy sauce, sesame oil, salt, pepper'
+    ],
+    instructions: [
+      'Scramble eggs in a hot wok or pan and set aside.',
+      'Sauté veggies in oil until tender.',
+      'Add cooked rice, stir-fry with soy sauce.',
+      'Mix in scrambled eggs, season with salt, pepper, sesame oil.'
+    ],
+    tips: 'Use day-old rice for best texture—fresh rice can be too sticky.'
+  },
+  'eggplant-parmesan': {
+    name: 'Eggplant Parmesan',
+    prepTime: '20 minutes',
+    cookTime: '25-30 minutes',
+    ingredients: [
+      '1-2 eggplants (sliced)',
+      'Marinara sauce',
+      'Mozzarella & Parmesan cheeses',
+      'Breadcrumbs, eggs (for breading), salt, pepper'
+    ],
+    instructions: [
+      'Salt eggplant slices, let sit to remove moisture.',
+      'Dip in egg wash, coat with breadcrumbs.',
+      'Pan-fry until golden or bake at 400°F for ~20 mins.',
+      'Layer eggplant with sauce and cheeses, bake until bubbly.'
+    ],
+    tips: 'Pre-salting eggplant helps remove bitterness and excess water.'
+  },
+  'falafel-platter': {
+    name: 'Falafel Platter',
+    prepTime: '20 minutes',
+    cookTime: '10-15 minutes',
+    ingredients: [
+      'Falafel mix or homemade falafel dough',
+      'Hummus, pita bread, salad greens',
+      'Cucumber, tomato, onions, tzatziki (optional)'
+    ],
+    instructions: [
+      'Shape falafel into balls/patties.',
+      'Fry or bake until crispy.',
+      'Serve with hummus, salad, and pita bread.'
+    ],
+    tips: 'Sprinkle falafel with chopped parsley and drizzle with tahini.'
+  },
+  'fruit-yogurt-parfait': {
+    name: 'Fruit & Yogurt Parfait',
+    prepTime: '5 minutes',
+    cookTime: '0 minutes',
+    ingredients: [
+      '1 cup yogurt (Greek or dairy-free alternative)',
+      'Assorted fresh fruits (berries, banana slices, etc.)',
+      'Granola or chopped nuts',
+      'Honey or maple syrup (optional)'
+    ],
+    instructions: [
+      'Layer yogurt, fruits, and granola in a glass.',
+      'Drizzle with honey or syrup if desired.',
+      'Serve immediately.'
+    ],
+    tips: 'Use frozen berries if fresh aren’t available—just thaw slightly before layering.'
+  },
+  'gourmet-burger': {
+    name: 'Basic Burger',
+    prepTime: '10 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      '1 burger patty (beef, turkey, or veggie)',
+      'Burger bun',
+      'Lettuce, tomato, onion',
+      'Condiments (ketchup, mustard, etc.)'
+    ],
+    instructions: [
+      'Grill or pan-sear the patty to desired doneness.',
+      'Toast buns lightly.',
+      'Assemble with veggies and condiments.',
+      'Serve hot.'
+    ],
+    tips: 'Use a brioche or pretzel bun for a fancier twist.'
+  },
   'gourmet-mushroom-risotto': {
     name: 'Gourmet Mushroom Risotto',
     prepTime: '15 minutes',
@@ -313,179 +888,118 @@ const recipes = {
       '1/2 cup white wine',
       '1 onion (finely chopped)',
       '2 tbsp butter (or vegan butter)',
-      '1 tbsp truffle oil (optional)',
-      'Salt and pepper to taste'
+      'Salt and pepper'
     ],
     instructions: [
-      'Sauté onions and mushrooms in butter until golden.',
-      'Add Arborio rice and toast briefly.',
-      'Add white wine, stir until absorbed.',
-      'Add stock gradually, stirring until rice is creamy.',
-      'Finish with salt, pepper, and optional truffle oil.'
+      'Sauté onions and mushrooms in butter.',
+      'Add Arborio rice, stir briefly.',
+      'Add white wine, let absorb.',
+      'Add stock gradually, stirring often.',
+      'Season with salt and pepper.'
     ],
-    tips: 'Use warm stock and add it slowly for the creamiest texture.'
+    tips: 'Add a drizzle of truffle oil for a fancy finish.'
   },
-  'vegetable-paella': {
-    name: 'Vegetable Paella',
-    prepTime: '20 minutes',
-    cookTime: '30 minutes',
+  'grilled-cheese': {
+    name: 'Grilled Cheese',
+    prepTime: '5 minutes',
+    cookTime: '5 minutes',
     ingredients: [
-      '1 cup bomba or short-grain rice',
-      '2 cups vegetable broth',
-      '1 bell pepper (sliced)',
-      '1 cup green beans',
-      '1 onion (chopped)',
-      '2 cloves garlic (minced)',
-      '1 tsp smoked paprika',
-      'Saffron threads (optional)'
+      '2 slices bread',
+      'Butter',
+      '2 slices cheese (American, cheddar, etc.)'
     ],
     instructions: [
-      'Sauté onions, garlic, and vegetables.',
-      'Stir in rice, paprika, and saffron threads.',
-      'Add broth, simmer uncovered until liquid is absorbed.',
-      'Avoid stirring to form the crunchy “socarrat” at the bottom.'
+      'Butter one side of each bread slice.',
+      'Place cheese between the unbuttered sides.',
+      'Grill in a pan until golden brown on each side.'
     ],
-    tips: 'Use a wide, shallow pan to achieve the best caramelized crust.'
+    tips: 'Add tomato slices or bacon bits for extra flavor.'
   },
-  'vegetable-curry': {
-    name: 'Vegetable Curry',
-    prepTime: '15 minutes',
+  'homemade-sushi-rolls': {
+    name: 'Homemade Sushi Rolls',
+    prepTime: '30 minutes',
     cookTime: '20 minutes',
     ingredients: [
-      '2 cups mixed vegetables (carrots, potatoes, peppers, etc.)',
-      '1 onion (chopped)',
-      '2 cloves garlic (minced)',
-      '1 tsp ginger (grated)',
-      '1 tbsp curry powder or paste',
-      '1 can coconut milk',
-      'Salt to taste'
+      'Sushi rice',
+      'Nori sheets',
+      'Fresh fish or veggies',
+      'Seasoned rice vinegar',
+      'Soy sauce, wasabi, pickled ginger'
     ],
     instructions: [
-      'Sauté onions, garlic, and ginger.',
-      'Add veggies, curry powder, and stir well.',
-      'Pour in coconut milk and simmer until veggies are tender.',
-      'Season with salt and additional spices as desired.'
+      'Cook sushi rice, mix with vinegar.',
+      'Spread rice on nori, place fillings, roll tightly.',
+      'Slice into pieces with a sharp knife.',
+      'Serve with soy sauce, wasabi, and ginger.'
     ],
-    tips: 'For an extra kick, add chili flakes or fresh chilies.'
+    tips: 'Keep your hands and knife slightly damp to prevent sticking.'
   },
-  'mediterranean-bowl': {
-    name: 'Mediterranean Bowl',
-    prepTime: '10 minutes',
-    cookTime: '15 minutes',
+  'hummus-veggies': {
+    name: 'Hummus & Veggies',
+    prepTime: '5 minutes',
+    cookTime: '0 minutes',
     ingredients: [
-      '1 cup cooked quinoa or couscous',
-      '1 cup chopped veggies (cucumber, tomato, onion)',
-      'Falafel (store-bought or homemade)',
-      'Hummus or tzatziki',
-      'Olive oil, salt, pepper'
+      'Hummus (store-bought or homemade)',
+      'Carrots, celery, cucumber, bell peppers (sliced)',
+      'Optional pita bread or crackers'
     ],
     instructions: [
-      'Cook quinoa (or couscous) according to package.',
-      'Lightly heat or bake falafel if needed.',
-      'Combine veggies, grains, and falafel in a bowl.',
-      'Top with hummus or tzatziki, drizzle with olive oil.',
-      'Season with salt and pepper to taste.'
+      'Wash and slice all veggies.',
+      'Arrange on a plate with hummus in a bowl.',
+      'Dip and enjoy.'
     ],
-    tips: 'Add olives, feta, or pickled onions for extra flavor.'
+    tips: 'Add a drizzle of olive oil and paprika on top of the hummus for extra style.'
+  },
+  'instant-oats-bowl': {
+    name: 'Instant Oats Bowl',
+    prepTime: '2 minutes',
+    cookTime: '2 minutes',
+    ingredients: [
+      '1 packet instant oats',
+      'Water or milk (dairy or non-dairy)',
+      'Toppings: fruit, nuts, sweetener'
+    ],
+    instructions: [
+      'Combine oats with liquid per packet instructions.',
+      'Microwave for ~2 minutes.',
+      'Stir and add toppings.'
+    ],
+    tips: 'Use cinnamon, a pinch of salt, or nut butter for added flavor.'
   },
   'jackfruit-crab-cakes': {
     name: 'Jackfruit "Crab" Cakes',
     prepTime: '20 minutes',
     cookTime: '10 minutes',
     ingredients: [
-      '1 can young jackfruit (drained and shredded)',
-      '1/2 cup breadcrumbs (vegan if needed)',
-      '1 tbsp Old Bay seasoning',
-      '1 tbsp vegan mayo',
-      '1 tsp Dijon mustard',
-      'Salt and pepper to taste'
+      '1 can young jackfruit (drained & shredded)',
+      '1/2 cup breadcrumbs',
+      'Old Bay seasoning',
+      'Vegan mayo or egg binder'
     ],
     instructions: [
-      'Combine all ingredients in a bowl.',
-      'Form small patties.',
-      'Pan-fry in oil until golden on both sides.',
-      'Serve with a lemon wedge and vegan remoulade.'
+      'Combine jackfruit, breadcrumbs, seasoning in a bowl.',
+      'Form into patties, pan-fry until golden.',
+      'Serve with lemon wedge or vegan tartar sauce.'
     ],
-    tips: 'Drain jackfruit thoroughly and remove seeds for best texture.'
+    tips: 'Drain jackfruit thoroughly for best texture.'
   },
-  'coconut-lentil-stew': {
-    name: 'Coconut Lentil Stew',
-    prepTime: '15 minutes',
-    cookTime: '25 minutes',
+  'lentil-soup': {
+    name: 'Lentil Soup',
+    prepTime: '10 minutes',
+    cookTime: '20 minutes',
     ingredients: [
-      '1 cup red lentils (rinsed)',
-      '1 can coconut milk',
-      '2 cups vegetable broth',
-      '1 onion (chopped)',
-      '2 cloves garlic (minced)',
-      '1 tsp cumin',
-      '1 tsp turmeric'
+      '1 cup lentils (rinsed)',
+      '4 cups vegetable broth',
+      '1 onion, 2 carrots, 2 celery stalks (chopped)',
+      'Salt, pepper, herbs (thyme or bay leaf)'
     ],
     instructions: [
-      'Sauté onion and garlic in a pot.',
-      'Add spices, lentils, broth, and coconut milk.',
-      'Simmer until lentils are soft (about 20 minutes).',
-      'Adjust seasoning with salt and pepper.'
+      'Sauté onion, carrots, celery in a pot.',
+      'Add lentils, broth, and herbs.',
+      'Simmer until lentils are tender (15-20 minutes).',
+      'Season with salt and pepper.'
     ],
-    tips: 'Garnish with fresh cilantro or parsley for a bright finish.'
-  },
-  'gourmet-pizza': {
-    name: 'Gourmet Pizza',
-    prepTime: '20 minutes',
-    cookTime: '15 minutes',
-    ingredients: [
-      '1 pizza dough (store-bought or homemade)',
-      'Tomato sauce',
-      'Mozzarella cheese (or vegan cheese)',
-      'Assorted toppings (pepperoni, mushrooms, peppers, etc.)'
-    ],
-    instructions: [
-      'Preheat oven to 475°F (245°C).',
-      'Shape dough, spread sauce, add cheese and toppings.',
-      'Bake on a pizza stone or tray for 10-15 minutes.',
-      'Let cool slightly before slicing.'
-    ],
-    tips: 'Brush crust edges with olive oil for a crisp, golden finish.'
-  },
-  'gourmet-burger': {
-    name: 'Gourmet Burger',
-    prepTime: '15 minutes',
-    cookTime: '10 minutes',
-    ingredients: [
-      '1 patty (beef, turkey, or veggie)',
-      'Burger bun',
-      'Lettuce, tomato, onion',
-      'Cheese (optional)',
-      'Condiments (ketchup, mustard, aioli, etc.)'
-    ],
-    instructions: [
-      'Grill or pan-sear the patty to desired doneness.',
-      'Toast buns lightly.',
-      'Assemble with veggies, cheese, and condiments.',
-      'Serve hot with fries or a side salad.'
-    ],
-    tips: 'Use a brioche or pretzel bun for a fancier twist.'
-  },
-  'ramen': {
-    name: 'Ramen',
-    prepTime: '15 minutes',
-    cookTime: '15 minutes',
-    ingredients: [
-      'Ramen noodles',
-      '4 cups broth (chicken, veggie, or miso base)',
-      '1 clove garlic (minced)',
-      '1 tsp grated ginger',
-      'Protein (chicken, tofu, pork belly, etc.)',
-      'Veggies (bok choy, mushrooms, corn, etc.)'
-    ],
-    instructions: [
-      'Sauté garlic and ginger briefly.',
-      'Add broth and bring to a simmer.',
-      'Cook noodles separately per package instructions.',
-      'Add protein and veggies to broth until cooked.',
-      'Combine noodles and broth, garnish as desired.'
-    ],
-    tips: 'Top with soft-boiled egg, green onions, or sesame seeds.'
+    tips: 'Add tomatoes or spinach for extra flavor and nutrients.'
   },
   'mac-and-cheese': {
     name: 'Mac & Cheese',
@@ -496,71 +1010,140 @@ const recipes = {
       '2 tbsp butter',
       '2 tbsp flour',
       '1.5 cups milk',
-      '2 cups shredded cheddar cheese',
-      'Salt and pepper'
+      '2 cups shredded cheese'
     ],
     instructions: [
       'Cook macaroni until al dente.',
       'Make a roux with butter and flour, then add milk.',
       'Stir in cheese until melted, season with salt/pepper.',
       'Combine sauce with cooked macaroni.',
-      'Optional: top with extra cheese and bake until bubbly.'
+      'Optional: top with more cheese or breadcrumbs and bake until bubbly.'
     ],
-    tips: 'Add a sprinkle of breadcrumbs on top for crunch.'
+    tips: 'Add a sprinkle of paprika or garlic powder for extra depth.'
   },
-  'mixed-vegetable-bowl': {
-    name: 'Mixed Vegetable Bowl',
+  'microwave-burrito': {
+    name: 'Microwave Burrito',
+    prepTime: '1 minute',
+    cookTime: '2-3 minutes',
+    ingredients: [
+      '1 store-bought frozen burrito',
+      'Optional toppings (salsa, cheese, sour cream)'
+    ],
+    instructions: [
+      'Remove burrito from packaging.',
+      'Microwave according to instructions (usually 2-3 minutes).',
+      'Add toppings, let cool slightly before eating.'
+    ],
+    tips: 'Flip or rotate the burrito halfway for more even heating.'
+  },
+  'mushroom-stroganoff': {
+    name: 'Mushroom Stroganoff',
+    prepTime: '15 minutes',
+    cookTime: '20 minutes',
+    ingredients: [
+      '8 oz mushrooms (sliced)',
+      '1 onion (chopped)',
+      '1 cup vegetable or beef broth',
+      '1/2 cup sour cream (or vegan alternative)',
+      'Egg noodles (or any pasta)'
+    ],
+    instructions: [
+      'Sauté onions and mushrooms until golden.',
+      'Add broth, simmer for ~10 minutes.',
+      'Stir in sour cream, season with salt & pepper.',
+      'Serve over cooked noodles.'
+    ],
+    tips: 'Add a splash of white wine or Worcestershire sauce for extra flavor.'
+  },
+  'pasta-primavera': {
+    name: 'Pasta Primavera',
+    prepTime: '15 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      '8 oz pasta (penne, farfalle, etc.)',
+      'Assorted veggies (zucchini, bell peppers, cherry tomatoes)',
+      '2 cloves garlic (minced)',
+      'Olive oil, salt, pepper, Parmesan (optional)'
+    ],
+    instructions: [
+      'Cook pasta in salted water per package directions.',
+      'Sauté veggies in olive oil with garlic until tender.',
+      'Toss pasta with veggies, season with salt & pepper.',
+      'Top with Parmesan if desired.'
+    ],
+    tips: 'Use seasonal veggies for the freshest taste.'
+  },
+  'protein-wrap': {
+    name: 'Protein Wrap',
+    prepTime: '5 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      'Tortilla or wrap',
+      'Grilled chicken or tofu',
+      'Lettuce, tomato, sauce (ranch, sriracha, etc.)'
+    ],
+    instructions: [
+      'Warm or grill your protein choice if needed.',
+      'Lay protein on the wrap, add veggies and sauce.',
+      'Fold or roll tightly and enjoy.'
+    ],
+    tips: 'Use leftover rotisserie chicken or marinated tofu for quick prep.'
+  },
+  'quick-quesadilla': {
+    name: 'Quick Quesadilla',
+    prepTime: '5 minutes',
+    cookTime: '5 minutes',
+    ingredients: [
+      '1 tortilla',
+      'Cheese or vegan cheese',
+      'Optional fillings (beans, peppers, onions)'
+    ],
+    instructions: [
+      'Heat a skillet over medium heat.',
+      'Place tortilla in pan, add cheese and fillings on half.',
+      'Fold tortilla and cook until cheese melts, flipping once.'
+    ],
+    tips: 'Serve with salsa, guacamole, or sour cream.'
+  },
+  'ramen': {
+    name: 'Ramen',
+    prepTime: '15 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      'Ramen noodles',
+      'Broth (chicken, veggie, or miso)',
+      'Garlic, ginger',
+      'Protein (chicken, tofu, pork, etc.)'
+    ],
+    instructions: [
+      'Sauté garlic and ginger briefly.',
+      'Add broth and bring to a simmer.',
+      'Cook noodles separately.',
+      'Combine noodles, broth, and protein.'
+    ],
+    tips: 'Top with soft-boiled egg, scallions, or seaweed.'
+  },
+  'shakshuka': {
+    name: 'Shakshuka',
     prepTime: '10 minutes',
     cookTime: '15 minutes',
     ingredients: [
-      '1 cup cooked rice or quinoa',
-      'Assorted veggies (zucchini, peppers, carrots, etc.)',
-      '1 tbsp soy sauce or marinade',
-      '1 tbsp olive oil',
-      'Salt and pepper'
+      '1 onion (chopped)',
+      '1 bell pepper (chopped)',
+      '2 cups diced tomatoes',
+      '2-3 eggs',
+      'Spices (cumin, paprika, chili flakes)'
     ],
     instructions: [
-      'Sauté or roast veggies with oil, salt, pepper.',
-      'Serve over cooked rice/quinoa.',
-      'Drizzle with soy sauce or your favorite dressing.'
+      'Sauté onion and pepper in oil with spices.',
+      'Add tomatoes, simmer until slightly thickened.',
+      'Crack eggs on top, cover pan to cook eggs to preference.'
     ],
-    tips: 'Experiment with roasted chickpeas or tofu for extra protein.'
+    tips: 'Serve with crusty bread to scoop up the sauce.'
   },
-  'buddha-bowl': {
-    name: 'Buddha Bowl',
-    prepTime: '10 minutes',
-    cookTime: '20 minutes',
-    ingredients: [
-      '1 cup cooked quinoa or brown rice',
-      'Roasted veggies (broccoli, sweet potato, etc.)',
-      'Chickpeas or black beans',
-      'Tahini or peanut sauce'
-    ],
-    instructions: [
-      'Roast veggies until tender.',
-      'Combine cooked grains, veggies, and beans in a bowl.',
-      'Top with tahini or peanut sauce.'
-    ],
-    tips: 'Add avocado slices, fresh greens, or roasted nuts/seeds.'
-  },
-  'chefs-special': {
-    name: "Chef's Special",
-    prepTime: '30 minutes',
-    cookTime: '30 minutes',
-    ingredients: [
-      'Varies based on what you have available!',
-      'Pick your favorite protein, veggies, spices'
-    ],
-    instructions: [
-      'Get creative in the kitchen!',
-      'Mix, match, and taste as you go.'
-    ],
-    tips: 'A little experimentation can lead to delicious discoveries!'
-  },
-  // Fallback if no matching key is found
   'stir-fry': {
-    name: 'Veggie Stir-Fry',
-    prepTime: '15 minutes',
+    name: 'Quick Veggie Stir-Fry',
+    prepTime: '10 minutes',
     cookTime: '10 minutes',
     ingredients: [
       '2 cups mixed vegetables',
@@ -577,25 +1160,73 @@ const recipes = {
       'Add sauce and serve hot.'
     ],
     tips: 'Cut all vegetables to similar sizes for even cooking.'
+  },
+  'stuffed-bell-peppers': {
+    name: 'Stuffed Bell Peppers',
+    prepTime: '15 minutes',
+    cookTime: '25-30 minutes',
+    ingredients: [
+      '3-4 bell peppers (tops removed, seeded)',
+      '1 cup cooked rice or quinoa',
+      '1 cup mixed veggies or beans',
+      'Cheese or vegan cheese (optional)'
+    ],
+    instructions: [
+      'Preheat oven to 375°F (190°C).',
+      'Mix rice/quinoa with veggies, season to taste.',
+      'Stuff peppers, top with cheese if desired.',
+      'Bake for 25-30 minutes or until peppers are tender.'
+    ],
+    tips: 'Use tomato sauce or salsa in the filling for extra moisture.'
+  },
+  'vegan-pad-thai': {
+    name: 'Vegan Pad Thai',
+    prepTime: '15 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      'Rice noodles',
+      'Pad Thai sauce (tamarind paste, soy sauce, sugar, lime)',
+      'Mixed veggies (bean sprouts, carrots, scallions)',
+      'Tofu or tempeh'
+    ],
+    instructions: [
+      'Soak or cook rice noodles per package instructions.',
+      'Stir-fry tofu, then veggies, in a wok with oil.',
+      'Add noodles, pour in Pad Thai sauce, toss quickly.',
+      'Top with crushed peanuts and lime juice.'
+    ],
+    tips: 'Adjust sweetness/tartness/spiciness to your preference.'
+  },
+  'vegetable-curry': {
+    name: 'Vegetable Curry',
+    prepTime: '15 minutes',
+    cookTime: '20 minutes',
+    ingredients: [
+      'Mixed veggies (carrots, peppers, potatoes)',
+      'Coconut milk',
+      'Curry paste or powder',
+      'Onion, garlic, ginger'
+    ],
+    instructions: [
+      'Sauté onion, garlic, ginger in oil.',
+      'Add veggies and curry paste, stir for a minute.',
+      'Pour in coconut milk, simmer until veggies are tender.'
+    ],
+    tips: 'Adjust spice level with chili flakes or fresh peppers.'
   }
 };
 
-let preferences = {
-  dietary: [],
-  hunger: null,
-  craving: null,
-  budget: null,
-  effort: null
-};
-
-let currentQuestionIndex = 0;
-
+/* -------------------------------------------------------
+   6) Quiz Flow
+------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function() {
   const questions = Array.from(document.querySelectorAll('.question-card'));
 
+  // Toggle dietary
   window.toggleDiet = function(diet, e) {
     const button = e.target;
     const isSelected = button.classList.contains('ring-2');
+
     if (diet === 'none') {
       // Clear all dietary selections
       document.querySelectorAll('[data-diet]').forEach((btn) => {
@@ -638,6 +1269,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.addPreference = function(category, value, e) {
     preferences[category] = value;
+
+    // Visually disable all buttons in that card
     const currentCard = e.target.closest('.question-card');
     currentCard.querySelectorAll('button').forEach((b) => {
       b.classList.add('opacity-50');
@@ -657,71 +1290,105 @@ document.addEventListener('DOMContentLoaded', function() {
     const result = document.getElementById('result');
     result.classList.remove('hidden');
 
-    // Get food suggestion based on just dietary, craving, budget
+    // Get suggestion
     const suggestion = getFoodSuggestion();
 
     // Update UI with suggestion
-    document.getElementById('food-suggestion').textContent = suggestion.emoji;
+    document.getElementById('food-suggestion').textContent = suggestion.emoji || '🍽️';
     document.getElementById('description').innerHTML = `
       <strong>${suggestion.name}</strong><br>${suggestion.description}
     `;
 
-    // Show recipe if user chose "lots" of effort
-    if (preferences.effort === 'lots') {
-      showRecipeDetails(suggestion.name);
+    // If there's a recipeKey and user effort is NOT 'delivery', show the recipe
+    if (suggestion.recipeKey && preferences.effort !== 'delivery') {
+      showRecipeDetails(suggestion.recipeKey);
     }
   };
 
+  // -------------------------------------------------------
+  // The core function that picks from the correct array
+  // -------------------------------------------------------
   window.getFoodSuggestion = function() {
-    const dietary = preferences.dietary[0] || 'none';
-    const craving = preferences.craving || 'savory'; // fallback
-    const budget = preferences.budget || 'medium';   // fallback
+    const { dietary, hunger, craving, budget, effort } = preferences;
 
-    // Build the dictionary key
-    let key = `${dietary}-${craving}-${budget}`;
-
-    // Check if it exists, otherwise fallback to "xxx-default"
-    let suggestion = foodSuggestions[key];
-    if (!suggestion) {
-      // Fallback to 'dietary-default' or ultimately 'none-default'
-      suggestion =
-        foodSuggestions[`${dietary}-default`] || foodSuggestions['none-default'];
+    // Decide which array to use based on "effort"
+    let arrayToSearch;
+    if (effort === 'delivery') {
+      arrayToSearch = deliveryOptions;
+    } else if (effort === 'easy') {
+      arrayToSearch = quickAndEasyOptions;
+    } else {
+      arrayToSearch = chefModeOptions;
     }
-    return suggestion;
+
+    // If user selected multiple diets, we just grab the first
+    const primaryDiet = dietary[0] || 'none';
+
+    // Filter that array
+    const filtered = arrayToSearch.filter(item => {
+      // If primaryDiet is 'none', no dietary restriction
+      const dietOk = (primaryDiet === 'none')
+        || item.dietary.includes(primaryDiet)
+        || (primaryDiet !== 'none' && item.dietary.includes('none'));
+
+      const cravingOk = item.craving.includes(craving);
+      const budgetOk  = item.budget.includes(budget);
+      const hungerOk  = item.hunger.includes(hunger);
+
+      return dietOk && cravingOk && budgetOk && hungerOk;
+    });
+
+    // If we found matches, pick the first. Otherwise fallback
+    if (filtered.length > 0) {
+      return filtered[0];
+    } else {
+      return {
+        name: "Chef's Special",
+        description: 'No exact match found—trust the chef!',
+        emoji: '🍽️',
+        recipeKey: null
+      };
+    }
   };
 
-  window.showRecipeDetails = function(foodName) {
+  // -------------------------------------------------------
+  // Show the recipe details
+  // -------------------------------------------------------
+  window.showRecipeDetails = function(recipeKey) {
     const recipeSection = document.getElementById('recipe-section');
     recipeSection.classList.remove('hidden');
 
-    // Convert the dish name to our recipe key format
-    // e.g. "Gourmet Mushroom Risotto" => "gourmet-mushroom-risotto"
-    const recipeKey = foodName
-      .toLowerCase()
-      .replace(/['"]+/g, '')      // remove quotes
-      .replace(/[^a-z0-9 ]/g, '') // remove special chars except spaces
-      .replace(/\s+/g, '-');      // spaces to hyphens
+    const recipe = recipes[recipeKey];
+    if (!recipe) {
+      // fallback if not found
+      document.getElementById('recipe-name').textContent = "Chef's Surprise";
+      document.getElementById('prep-time').textContent = 'N/A';
+      document.getElementById('cook-time').textContent = 'N/A';
+      document.getElementById('ingredients-list').innerHTML = '<li>Improvise!</li>';
+      document.getElementById('instructions-list').innerHTML = '<li>Have fun cooking!</li>';
+      document.getElementById('cooking-tips').textContent = 'Sometimes the best meals are improvised.';
+      return;
+    }
 
-    // If not found, fallback to 'stir-fry'
-    const recipe = recipes[recipeKey] || recipes['stir-fry'];
-
+    // Fill in recipe info
     document.getElementById('recipe-name').textContent = recipe.name;
     document.getElementById('prep-time').textContent = recipe.prepTime;
     document.getElementById('cook-time').textContent = recipe.cookTime;
 
-    const ingredientsList = document.getElementById('ingredients-list');
-    ingredientsList.innerHTML = recipe.ingredients
-      .map((ingredient) => `<li>${ingredient}</li>`)
+    document.getElementById('ingredients-list').innerHTML = recipe.ingredients
+      .map(i => `<li>${i}</li>`)
       .join('');
 
-    const instructionsList = document.getElementById('instructions-list');
-    instructionsList.innerHTML = recipe.instructions
-      .map((step) => `<li>${step}</li>`)
+    document.getElementById('instructions-list').innerHTML = recipe.instructions
+      .map(step => `<li>${step}</li>`)
       .join('');
 
-    document.getElementById('cooking-tips').textContent = recipe.tips;
+    document.getElementById('cooking-tips').textContent = recipe.tips || '';
   };
 
+  // -------------------------------------------------------
+  // Reset quiz
+  // -------------------------------------------------------
   window.resetQuiz = function() {
     preferences = {
       dietary: [],
