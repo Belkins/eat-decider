@@ -11,7 +11,6 @@
   />
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4">
-
 <main class="max-w-xl w-full bg-white rounded-xl shadow-xl p-8">
   <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
     What Should I Eat Tonight? 🍽️
@@ -71,7 +70,7 @@
           </button>
         </div>
 
-        <!-- Hunger Level -->
+        <!-- Hunger Level (not used in dictionary lookups, purely informational if needed) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">What's your hunger level?</p>
           <button
@@ -146,7 +145,7 @@
           </button>
         </div>
 
-        <!-- Effort -->
+        <!-- Effort (not used for dictionary key, only for deciding recipe display) -->
         <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
           <p class="mb-3 font-medium">How much effort are you willing to put in?</p>
           <button
@@ -222,65 +221,67 @@
 </main>
 
 <script>
-/* Food suggestion database */
+/* Updated Food suggestion database using only
+   'dietary-craving-budget' as the key */
 const foodSuggestions = {
-  // Vegetarian options
-  'vegetarian-savory-high-none': {
+  // Vegetarian
+  'vegetarian-savory-high': {
     emoji: '🍝',
     name: 'Gourmet Mushroom Risotto',
     description: 'Creamy, rich risotto with wild mushrooms and truffle oil.'
   },
-  'vegetarian-savory-medium-none': {
+  'vegetarian-savory-medium': {
     emoji: '🥘',
     name: 'Vegetable Paella',
     description: 'Spanish-inspired rice dish with seasonal vegetables.'
   },
-  'vegetarian-spicy-medium-none': {
+  'vegetarian-spicy-medium': {
     emoji: '🍛',
     name: 'Vegetable Curry',
     description: 'Aromatic curry with coconut milk and fresh vegetables.'
   },
-  'vegetarian-fresh-medium-none': {
+  'vegetarian-fresh-medium': {
     emoji: '🥗',
     name: 'Mediterranean Bowl',
     description: 'Fresh vegetables, falafel, and hummus over quinoa.'
   },
+  // Add more combos as needed, e.g. vegetarian-savory-low, etc.
 
-  // Vegan options
-  'vegan-savory-high-none': {
+  // Vegan
+  'vegan-savory-high': {
     emoji: '🌱',
     name: 'Jackfruit "Crab" Cakes',
     description: 'Plant-based cakes with fresh herbs and vegan remoulade.'
   },
-  'vegan-comfort-medium-none': {
+  'vegan-comfort-medium': {
     emoji: '🍲',
     name: 'Coconut Lentil Stew',
     description: 'Hearty stew with red lentils and warming spices.'
   },
 
   // No restrictions
-  'none-savory-high-none': {
+  'none-savory-high': {
     emoji: '🍕',
     name: 'Gourmet Pizza',
     description: 'Artisanal pizza with premium toppings!'
   },
-  'none-savory-medium-none': {
+  'none-savory-medium': {
     emoji: '🍔',
     name: 'Gourmet Burger',
     description: 'Hand-crafted burger with all the fixings.'
   },
-  'none-spicy-high-none': {
+  'none-spicy-high': {
     emoji: '🍜',
     name: 'Ramen',
     description: 'Authentic ramen with fresh noodles and premium toppings.'
   },
-  'none-comfort-medium-none': {
+  'none-comfort-medium': {
     emoji: '🥘',
     name: 'Mac & Cheese',
     description: 'Creamy comfort food with a crispy top.'
   },
 
-  // Default fallback options
+  // Default fallback options for each dietary restriction
   'vegetarian-default': {
     emoji: '🥗',
     name: 'Mixed Vegetable Bowl',
@@ -298,10 +299,8 @@ const foodSuggestions = {
   }
 };
 
-/* Recipe database.
-   Each key matches a "food suggestion" name (converted to lower-case,
-   minus special characters/spaces, see showRecipeDetails).
-*/
+/* Our big recipe database (same as before).
+   Key is a lowercased, hyphenated version of the dish name. */
 const recipes = {
   'gourmet-mushroom-risotto': {
     name: 'Gourmet Mushroom Risotto',
@@ -558,7 +557,7 @@ const recipes = {
     ],
     tips: 'A little experimentation can lead to delicious discoveries!'
   },
-  // Fallback if no matching key found
+  // Fallback if no matching key is found
   'stir-fry': {
     name: 'Veggie Stir-Fry',
     prepTime: '15 minutes',
@@ -581,7 +580,6 @@ const recipes = {
   }
 };
 
-/* Initialize state */
 let preferences = {
   dietary: [],
   hunger: null,
@@ -592,14 +590,12 @@ let preferences = {
 
 let currentQuestionIndex = 0;
 
-/* Wait for DOM to be loaded */
 document.addEventListener('DOMContentLoaded', function() {
   const questions = Array.from(document.querySelectorAll('.question-card'));
 
   window.toggleDiet = function(diet, e) {
     const button = e.target;
     const isSelected = button.classList.contains('ring-2');
-
     if (diet === 'none') {
       // Clear all dietary selections
       document.querySelectorAll('[data-diet]').forEach((btn) => {
@@ -642,7 +638,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.addPreference = function(category, value, e) {
     preferences[category] = value;
-
     const currentCard = e.target.closest('.question-card');
     currentCard.querySelectorAll('button').forEach((b) => {
       b.classList.add('opacity-50');
@@ -662,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const result = document.getElementById('result');
     result.classList.remove('hidden');
 
-    // Get food suggestion based on preferences
+    // Get food suggestion based on just dietary, craving, budget
     const suggestion = getFoodSuggestion();
 
     // Update UI with suggestion
@@ -671,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <strong>${suggestion.name}</strong><br>${suggestion.description}
     `;
 
-    // Show recipe if "lots" of effort
+    // Show recipe if user chose "lots" of effort
     if (preferences.effort === 'lots') {
       showRecipeDetails(suggestion.name);
     }
@@ -679,14 +674,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.getFoodSuggestion = function() {
     const dietary = preferences.dietary[0] || 'none';
-    const key = `${dietary}-${preferences.craving}-${preferences.budget}-${preferences.effort}`;
+    const craving = preferences.craving || 'savory'; // fallback
+    const budget = preferences.budget || 'medium';   // fallback
 
-    // Try to get exact match
+    // Build the dictionary key
+    let key = `${dietary}-${craving}-${budget}`;
+
+    // Check if it exists, otherwise fallback to "xxx-default"
     let suggestion = foodSuggestions[key];
-
-    // Fallback to default for dietary restriction if not found
     if (!suggestion) {
-      suggestion = foodSuggestions[`${dietary}-default`] || foodSuggestions['none-default'];
+      // Fallback to 'dietary-default' or ultimately 'none-default'
+      suggestion =
+        foodSuggestions[`${dietary}-default`] || foodSuggestions['none-default'];
     }
     return suggestion;
   };
@@ -695,14 +694,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const recipeSection = document.getElementById('recipe-section');
     recipeSection.classList.remove('hidden');
 
-    // Convert "Ramen" => "ramen", "Jackfruit \"Crab\" Cakes" => "jackfruit-crab-cakes", etc.
+    // Convert the dish name to our recipe key format
+    // e.g. "Gourmet Mushroom Risotto" => "gourmet-mushroom-risotto"
     const recipeKey = foodName
       .toLowerCase()
-      .replace(/['"]+/g, '') // remove quotes
-      .replace(/[^a-z0-9 ]/g, '') // remove any special chars except spaces
-      .replace(/\s+/g, '-'); // convert spaces to hyphens
+      .replace(/['"]+/g, '')      // remove quotes
+      .replace(/[^a-z0-9 ]/g, '') // remove special chars except spaces
+      .replace(/\s+/g, '-');      // spaces to hyphens
 
-    // Look up the recipe; if not found, fall back to stir-fry
+    // If not found, fallback to 'stir-fry'
     const recipe = recipes[recipeKey] || recipes['stir-fry'];
 
     document.getElementById('recipe-name').textContent = recipe.name;
@@ -716,7 +716,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const instructionsList = document.getElementById('instructions-list');
     instructionsList.innerHTML = recipe.instructions
-      .map((instruction) => `<li>${instruction}</li>`)
+      .map((step) => `<li>${step}</li>`)
       .join('');
 
     document.getElementById('cooking-tips').textContent = recipe.tips;
