@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -206,6 +206,12 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Shopping List Section (NEW) -->
+    <div id="shopping-list-section" class="hidden space-y-4 mb-6">
+      <h3 class="text-xl font-semibold">Shopping List</h3>
+      <ul id="shopping-list-items" class="list-disc pl-5"></ul>
     </div>
 
     <!-- Nearby Options turned off -->
@@ -1285,33 +1291,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
+  // Show results
   window.showResult = function() {
-    document.getElementById('question-container').classList.add('hidden');
-    const result = document.getElementById('result');
-    result.classList.remove('hidden');
+  document.getElementById('question-container').classList.add('hidden');
+  const result = document.getElementById('result');
+  result.classList.remove('hidden');
 
-    // Get suggestion
-    const suggestion = getFoodSuggestion();
+  // Get suggestion
+  const suggestion = getFoodSuggestion();
 
-    // Update UI with suggestion
-    document.getElementById('food-suggestion').textContent = suggestion.emoji || '🍽️';
-    document.getElementById('description').innerHTML = `
-      <strong>${suggestion.name}</strong><br>${suggestion.description}
-    `;
+  // Update UI
+  document.getElementById('food-suggestion').textContent = suggestion.emoji || '🍽️';
+  document.getElementById('description').innerHTML = `
+    <strong>${suggestion.name}</strong><br>${suggestion.description}
+  `;
 
-    // If there's a recipeKey and user effort is NOT 'delivery', show the recipe
-    if (suggestion.recipeKey && preferences.effort !== 'delivery') {
-      showRecipeDetails(suggestion.recipeKey);
-    }
-  };
+  // Remove any existing Shopping List button to avoid duplicates
+  const oldBtn = document.getElementById('shopping-list-btn');
+  if (oldBtn) {
+    oldBtn.remove();
+  }
 
-  // -------------------------------------------------------
-  // The core function that picks from the correct array
-  // -------------------------------------------------------
+  // If there's a recipeKey (non-delivery), show recipe & add Shopping List button
+  if (suggestion.recipeKey && preferences.effort !== 'delivery') {
+    showRecipeDetails(suggestion.recipeKey);
+
+    const shoppingListBtn = document.createElement('button');
+    shoppingListBtn.id = 'shopping-list-btn';
+    shoppingListBtn.classList.add(
+      'px-4', 'py-2', 'bg-green-500', 'text-white',
+      'rounded', 'hover:bg-green-600', 'mt-3'
+    );
+    shoppingListBtn.textContent = 'Generate Shopping List';
+    shoppingListBtn.onclick = () => generateShoppingList(suggestion.recipeKey);
+
+    document.getElementById('recommendation').appendChild(shoppingListBtn);
+  }
+};
+
+  // The function that decides from which array to pick
   window.getFoodSuggestion = function() {
     const { dietary, hunger, craving, budget, effort } = preferences;
 
-    // Decide which array to use based on "effort"
     let arrayToSearch;
     if (effort === 'delivery') {
       arrayToSearch = deliveryOptions;
@@ -1321,12 +1342,9 @@ document.addEventListener('DOMContentLoaded', function() {
       arrayToSearch = chefModeOptions;
     }
 
-    // If user selected multiple diets, we just grab the first
     const primaryDiet = dietary[0] || 'none';
 
-    // Filter that array
     const filtered = arrayToSearch.filter(item => {
-      // If primaryDiet is 'none', no dietary restriction
       const dietOk = (primaryDiet === 'none')
         || item.dietary.includes(primaryDiet)
         || (primaryDiet !== 'none' && item.dietary.includes('none'));
@@ -1338,7 +1356,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return dietOk && cravingOk && budgetOk && hungerOk;
     });
 
-    // If we found matches, pick the first. Otherwise fallback
     if (filtered.length > 0) {
       return filtered[0];
     } else {
@@ -1351,16 +1368,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // -------------------------------------------------------
   // Show the recipe details
-  // -------------------------------------------------------
   window.showRecipeDetails = function(recipeKey) {
     const recipeSection = document.getElementById('recipe-section');
     recipeSection.classList.remove('hidden');
 
     const recipe = recipes[recipeKey];
     if (!recipe) {
-      // fallback if not found
       document.getElementById('recipe-name').textContent = "Chef's Surprise";
       document.getElementById('prep-time').textContent = 'N/A';
       document.getElementById('cook-time').textContent = 'N/A';
@@ -1386,9 +1400,31 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cooking-tips').textContent = recipe.tips || '';
   };
 
-  // -------------------------------------------------------
+  // NEW: Generate Shopping List
+  window.generateShoppingList = function(recipeKey) {
+  // If something goes wrong or no recipe found
+  if (!recipes[recipeKey]) return;
+
+  // Show the shopping list section
+  const listSection = document.getElementById('shopping-list-section');
+  listSection.classList.remove('hidden');
+
+  // Grab the ingredients
+  const { ingredients } = recipes[recipeKey];
+
+  // Populate them in a list with checkboxes
+  const listContainer = document.getElementById('shopping-list-items');
+  listContainer.innerHTML = ingredients.map((item, i) => `
+    <li>
+      <label class="inline-flex items-center space-x-2">
+        <input type="checkbox" class="form-checkbox h-4 w-4" />
+        <span>${item}</span>
+      </label>
+    </li>
+  `).join('');
+};
+
   // Reset quiz
-  // -------------------------------------------------------
   window.resetQuiz = function() {
     preferences = {
       dietary: [],
@@ -1414,6 +1450,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('result').classList.add('hidden');
     document.getElementById('question-container').classList.remove('hidden');
+    document.getElementById('recipe-section').classList.add('hidden');
+    document.getElementById('shopping-list-section').classList.add('hidden');
   };
 });
 </script>
