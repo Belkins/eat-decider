@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>What Should I Eat Tonight?</title>
+  <!-- Tailwind CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+<main class="max-w-xl w-full bg-white rounded-xl shadow-xl p-8">
+  <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">
+    What Should I Eat Tonight? 🍽️
+  </h1>
+
+  <div id="question-container" class="space-y-8">
+    <div class="text-center mb-6">
+      <p class="text-lg mb-4">Let's figure out your perfect dinner!</p>
+      <div class="space-y-6">
+        <!-- Dietary Restrictions -->
+        <div class="question-card bg-gray-50 p-4 rounded-lg">
+          <p class="mb-3 font-medium">
+            Any dietary restrictions? (Select all that apply)
+          </p>
+          <div class="flex flex-wrap gap-2 justify-center">
+            <button
+              onclick="toggleDiet('vegetarian', event)"
+              data-diet="vegetarian"
+              class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
+            >
+              Vegetarian 🥬
+            </button>
+            <button
+              onclick="toggleDiet('vegan', event)"
+              data-diet="vegan"
+              class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
+            >
+              Vegan 🌱
+            </button>
+            <button
+              onclick="toggleDiet('gluten-free', event)"
+              data-diet="gluten-free"
+              class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200"
+            >
+              Gluten-Free 🌾
+            </button>
+            <button
+              onclick="toggleDiet('dairy-free', event)"
+              data-diet="dairy-free"
+              class="px-4 py-2 bg-blue-100 rounded hover:bg-blue-200"
+            >
+              Dairy-Free 🥛
+            </button>
+            <button
+              onclick="toggleDiet('none', event)"
+              data-diet="none"
+              class="px-4 py-2 bg-purple-100 rounded hover:bg-purple-200"
+            >
+              No Restrictions
+            </button>
+          </div>
+          <button
+            onclick="confirmDiet()"
+            class="mt-4 px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
+          >
+            Confirm & Continue ✓
+          </button>
+        </div>
+
+        <!-- Hunger Level -->
+        <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
+          <p class="mb-3 font-medium">What's your hunger level?</p>
+          <button
+            onclick="addPreference('hunger', 3, event)"
+            class="px-4 py-2 bg-red-100 rounded hover:bg-red-200 mr-2"
+          >
+            Starving! 🐺
+          </button>
+          <button
+            onclick="addPreference('hunger', 2, event)"
+            class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200 mr-2"
+          >
+            Quite Hungry 😋
+          </button>
+          <button
+            onclick="addPreference('hunger', 1, event)"
+            class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
+          >
+            Just Peckish 🐦
+          </button>
+        </div>
+
+        <!-- Craving -->
+        <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
+          <p class="mb-3 font-medium">What are you craving?</p>
+          <button
+            onclick="addPreference('craving', 'savory', event)"
+            class="px-4 py-2 bg-orange-100 rounded hover:bg-orange-200 mr-2"
+          >
+            Savory 🧀
+          </button>
+          <button
+            onclick="addPreference('craving', 'spicy', event)"
+            class="px-4 py-2 bg-red-100 rounded hover:bg-red-200 mr-2"
+          >
+            Spicy 🌶️
+          </button>
+          <button
+            onclick="addPreference('craving', 'fresh', event)"
+            class="px-4 py-2 bg-green-100 rounded hover:bg-green-200 mr-2"
+          >
+            Fresh 🥗
+          </button>
+          <button
+            onclick="addPreference('craving', 'comfort', event)"
+            class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200"
+          >
+            Comfort 🍲
+          </button>
+        </div>
+
+        <!-- Budget -->
+        <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
+          <p class="mb-3 font-medium">What's your budget?</p>
+          <button
+            onclick="addPreference('budget', 'low', event)"
+            class="px-4 py-2 bg-green-100 rounded hover:bg-green-200 mr-2"
+          >
+            $ Budget
+          </button>
+          <button
+            onclick="addPreference('budget', 'medium', event)"
+            class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200 mr-2"
+          >
+            $$ Moderate
+          </button>
+          <button
+            onclick="addPreference('budget', 'high', event)"
+            class="px-4 py-2 bg-purple-100 rounded hover:bg-purple-200"
+          >
+            $$$ Treat Yourself
+          </button>
+        </div>
+
+        <!-- Effort -->
+        <div class="question-card bg-gray-50 p-4 rounded-lg hidden">
+          <p class="mb-3 font-medium">How much effort are you willing to put in?</p>
+          <button
+            onclick="addPreference('effort', 'none', event)"
+            class="px-4 py-2 bg-blue-100 rounded hover:bg-blue-200 mr-2"
+          >
+            Delivery Only 🛵
+          </button>
+          <button
+            onclick="addPreference('effort', 'some', event)"
+            class="px-4 py-2 bg-yellow-100 rounded hover:bg-yellow-200 mr-2"
+          >
+            Quick & Easy 🥪
+          </button>
+          <button
+            onclick="addPreference('effort', 'lots', event)"
+            class="px-4 py-2 bg-green-100 rounded hover:bg-green-200"
+          >
+            Chef Mode 👨‍🍳
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="result" class="hidden text-center space-y-6">
+    <div id="recommendation">
+      <p class="text-2xl font-bold mb-4">Your Perfect Dinner Tonight:</p>
+      <div id="food-suggestion" class="text-4xl mb-6">🤔</div>
+      <p id="description" class="text-lg mb-4"></p>
+    </div>
+
+    <!-- Recipe Section -->
+    <div id="recipe-section" class="hidden space-y-4 mb-6">
+      <div class="bg-gray-50 rounded-lg p-6">
+        <h3 class="text-xl font-semibold mb-4" id="recipe-name">Recipe Details</h3>
+        <div class="text-left space-y-4">
+          <div>
+            <h4 class="font-medium">
+              Prep Time: <span id="prep-time"></span>
+            </h4>
+            <h4 class="font-medium">
+              Cook Time: <span id="cook-time"></span>
+            </h4>
+          </div>
+          <div>
+            <h4 class="font-medium">Ingredients:</h4>
+            <ul id="ingredients-list" class="list-disc pl-5"></ul>
+          </div>
+          <div>
+            <h4 class="font-medium">Instructions:</h4>
+            <ol id="instructions-list" class="list-decimal pl-5"></ol>
+          </div>
+          <div>
+            <h4 class="font-medium">Tips:</h4>
+            <p id="cooking-tips" class="text-gray-600 italic"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nearby Options turned off -->
+    <!-- <div id="nearby-options" class="space-y-4 mb-6"> ... </div> -->
+
+    <button
+      onclick="resetQuiz()"
+      class="text-blue-500 hover:text-blue-700 font-medium"
+    >
+      Start Over
+    </button>
+  </div>
+</main>
+
+<script>
+/* Food suggestion database */
+const foodSuggestions = {
+  // Vegetarian options
+  'vegetarian-savory-high-none': {
+    emoji: '🍝',
+    name: 'Gourmet Mushroom Risotto',
+    description: 'Creamy, rich risotto with wild mushrooms and truffle oil.'
+  },
+  'vegetarian-savory-medium-none': {
+    emoji: '🥘',
+    name: 'Vegetable Paella',
+    description: 'Spanish-inspired rice dish with seasonal vegetables.'
+  },
+  'vegetarian-spicy-medium-none': {
+    emoji: '🍛',
+    name: 'Vegetable Curry',
+    description: 'Aromatic curry with coconut milk and fresh vegetables.'
+  },
+  'vegetarian-fresh-medium-none': {
+    emoji: '🥗',
+    name: 'Mediterranean Bowl',
+    description: 'Fresh vegetables, falafel, and hummus over quinoa.'
+  },
+
+  // Vegan options
+  'vegan-savory-high-none': {
+    emoji: '🌱',
+    name: 'Jackfruit "Crab" Cakes',
+    description: 'Plant-based cakes with fresh herbs and vegan remoulade.'
+  },
+  'vegan-comfort-medium-none': {
+    emoji: '🍲',
+    name: 'Coconut Lentil Stew',
+    description: 'Hearty stew with red lentils and warming spices.'
+  },
+
+  // No restrictions
+  'none-savory-high-none': {
+    emoji: '🍕',
+    name: 'Gourmet Pizza',
+    description: 'Artisanal pizza with premium toppings!'
+  },
+  'none-savory-medium-none': {
+    emoji: '🍔',
+    name: 'Gourmet Burger',
+    description: 'Hand-crafted burger with all the fixings.'
+  },
+  'none-spicy-high-none': {
+    emoji: '🍜',
+    name: 'Ramen',
+    description: 'Authentic ramen with fresh noodles and premium toppings.'
+  },
+  'none-comfort-medium-none': {
+    emoji: '🥘',
+    name: 'Mac & Cheese',
+    description: 'Creamy comfort food with a crispy top.'
+  },
+
+  // Default fallback options
+  'vegetarian-default': {
+    emoji: '🥗',
+    name: 'Mixed Vegetable Bowl',
+    description: 'A satisfying mix of grains, vegetables, and plant-based protein.'
+  },
+  'vegan-default': {
+    emoji: '🌱',
+    name: 'Buddha Bowl',
+    description: 'Nutritious bowl with quinoa, roasted vegetables, and tahini dressing.'
+  },
+  'none-default': {
+    emoji: '🍽️',
+    name: "Chef's Special",
+    description: 'A perfectly balanced meal based on your preferences!'
+  }
+};
+
+/* Recipe database.
+   Each key matches a "food suggestion" name (converted to lower-case,
+   minus special characters/spaces, see showRecipeDetails).
+*/
+const recipes = {
+  'gourmet-mushroom-risotto': {
+    name: 'Gourmet Mushroom Risotto',
+    prepTime: '15 minutes',
+    cookTime: '25 minutes',
+    ingredients: [
+      '1 cup Arborio rice',
+      '2 cups vegetable stock',
+      '1 cup mushrooms (sliced)',
+      '1/2 cup white wine',
+      '1 onion (finely chopped)',
+      '2 tbsp butter (or vegan butter)',
+      '1 tbsp truffle oil (optional)',
+      'Salt and pepper to taste'
+    ],
+    instructions: [
+      'Sauté onions and mushrooms in butter until golden.',
+      'Add Arborio rice and toast briefly.',
+      'Add white wine, stir until absorbed.',
+      'Add stock gradually, stirring until rice is creamy.',
+      'Finish with salt, pepper, and optional truffle oil.'
+    ],
+    tips: 'Use warm stock and add it slowly for the creamiest texture.'
+  },
+  'vegetable-paella': {
+    name: 'Vegetable Paella',
+    prepTime: '20 minutes',
+    cookTime: '30 minutes',
+    ingredients: [
+      '1 cup bomba or short-grain rice',
+      '2 cups vegetable broth',
+      '1 bell pepper (sliced)',
+      '1 cup green beans',
+      '1 onion (chopped)',
+      '2 cloves garlic (minced)',
+      '1 tsp smoked paprika',
+      'Saffron threads (optional)'
+    ],
+    instructions: [
+      'Sauté onions, garlic, and vegetables.',
+      'Stir in rice, paprika, and saffron threads.',
+      'Add broth, simmer uncovered until liquid is absorbed.',
+      'Avoid stirring to form the crunchy “socarrat” at the bottom.'
+    ],
+    tips: 'Use a wide, shallow pan to achieve the best caramelized crust.'
+  },
+  'vegetable-curry': {
+    name: 'Vegetable Curry',
+    prepTime: '15 minutes',
+    cookTime: '20 minutes',
+    ingredients: [
+      '2 cups mixed vegetables (carrots, potatoes, peppers, etc.)',
+      '1 onion (chopped)',
+      '2 cloves garlic (minced)',
+      '1 tsp ginger (grated)',
+      '1 tbsp curry powder or paste',
+      '1 can coconut milk',
+      'Salt to taste'
+    ],
+    instructions: [
+      'Sauté onions, garlic, and ginger.',
+      'Add veggies, curry powder, and stir well.',
+      'Pour in coconut milk and simmer until veggies are tender.',
+      'Season with salt and additional spices as desired.'
+    ],
+    tips: 'For an extra kick, add chili flakes or fresh chilies.'
+  },
+  'mediterranean-bowl': {
+    name: 'Mediterranean Bowl',
+    prepTime: '10 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      '1 cup cooked quinoa or couscous',
+      '1 cup chopped veggies (cucumber, tomato, onion)',
+      'Falafel (store-bought or homemade)',
+      'Hummus or tzatziki',
+      'Olive oil, salt, pepper'
+    ],
+    instructions: [
+      'Cook quinoa (or couscous) according to package.',
+      'Lightly heat or bake falafel if needed.',
+      'Combine veggies, grains, and falafel in a bowl.',
+      'Top with hummus or tzatziki, drizzle with olive oil.',
+      'Season with salt and pepper to taste.'
+    ],
+    tips: 'Add olives, feta, or pickled onions for extra flavor.'
+  },
+  'jackfruit-crab-cakes': {
+    name: 'Jackfruit "Crab" Cakes',
+    prepTime: '20 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      '1 can young jackfruit (drained and shredded)',
+      '1/2 cup breadcrumbs (vegan if needed)',
+      '1 tbsp Old Bay seasoning',
+      '1 tbsp vegan mayo',
+      '1 tsp Dijon mustard',
+      'Salt and pepper to taste'
+    ],
+    instructions: [
+      'Combine all ingredients in a bowl.',
+      'Form small patties.',
+      'Pan-fry in oil until golden on both sides.',
+      'Serve with a lemon wedge and vegan remoulade.'
+    ],
+    tips: 'Drain jackfruit thoroughly and remove seeds for best texture.'
+  },
+  'coconut-lentil-stew': {
+    name: 'Coconut Lentil Stew',
+    prepTime: '15 minutes',
+    cookTime: '25 minutes',
+    ingredients: [
+      '1 cup red lentils (rinsed)',
+      '1 can coconut milk',
+      '2 cups vegetable broth',
+      '1 onion (chopped)',
+      '2 cloves garlic (minced)',
+      '1 tsp cumin',
+      '1 tsp turmeric'
+    ],
+    instructions: [
+      'Sauté onion and garlic in a pot.',
+      'Add spices, lentils, broth, and coconut milk.',
+      'Simmer until lentils are soft (about 20 minutes).',
+      'Adjust seasoning with salt and pepper.'
+    ],
+    tips: 'Garnish with fresh cilantro or parsley for a bright finish.'
+  },
+  'gourmet-pizza': {
+    name: 'Gourmet Pizza',
+    prepTime: '20 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      '1 pizza dough (store-bought or homemade)',
+      'Tomato sauce',
+      'Mozzarella cheese (or vegan cheese)',
+      'Assorted toppings (pepperoni, mushrooms, peppers, etc.)'
+    ],
+    instructions: [
+      'Preheat oven to 475°F (245°C).',
+      'Shape dough, spread sauce, add cheese and toppings.',
+      'Bake on a pizza stone or tray for 10-15 minutes.',
+      'Let cool slightly before slicing.'
+    ],
+    tips: 'Brush crust edges with olive oil for a crisp, golden finish.'
+  },
+  'gourmet-burger': {
+    name: 'Gourmet Burger',
+    prepTime: '15 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      '1 patty (beef, turkey, or veggie)',
+      'Burger bun',
+      'Lettuce, tomato, onion',
+      'Cheese (optional)',
+      'Condiments (ketchup, mustard, aioli, etc.)'
+    ],
+    instructions: [
+      'Grill or pan-sear the patty to desired doneness.',
+      'Toast buns lightly.',
+      'Assemble with veggies, cheese, and condiments.',
+      'Serve hot with fries or a side salad.'
+    ],
+    tips: 'Use a brioche or pretzel bun for a fancier twist.'
+  },
+  'ramen': {
+    name: 'Ramen',
+    prepTime: '15 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      'Ramen noodles',
+      '4 cups broth (chicken, veggie, or miso base)',
+      '1 clove garlic (minced)',
+      '1 tsp grated ginger',
+      'Protein (chicken, tofu, pork belly, etc.)',
+      'Veggies (bok choy, mushrooms, corn, etc.)'
+    ],
+    instructions: [
+      'Sauté garlic and ginger briefly.',
+      'Add broth and bring to a simmer.',
+      'Cook noodles separately per package instructions.',
+      'Add protein and veggies to broth until cooked.',
+      'Combine noodles and broth, garnish as desired.'
+    ],
+    tips: 'Top with soft-boiled egg, green onions, or sesame seeds.'
+  },
+  'mac-and-cheese': {
+    name: 'Mac & Cheese',
+    prepTime: '10 minutes',
+    cookTime: '20 minutes',
+    ingredients: [
+      '8 oz macaroni',
+      '2 tbsp butter',
+      '2 tbsp flour',
+      '1.5 cups milk',
+      '2 cups shredded cheddar cheese',
+      'Salt and pepper'
+    ],
+    instructions: [
+      'Cook macaroni until al dente.',
+      'Make a roux with butter and flour, then add milk.',
+      'Stir in cheese until melted, season with salt/pepper.',
+      'Combine sauce with cooked macaroni.',
+      'Optional: top with extra cheese and bake until bubbly.'
+    ],
+    tips: 'Add a sprinkle of breadcrumbs on top for crunch.'
+  },
+  'mixed-vegetable-bowl': {
+    name: 'Mixed Vegetable Bowl',
+    prepTime: '10 minutes',
+    cookTime: '15 minutes',
+    ingredients: [
+      '1 cup cooked rice or quinoa',
+      'Assorted veggies (zucchini, peppers, carrots, etc.)',
+      '1 tbsp soy sauce or marinade',
+      '1 tbsp olive oil',
+      'Salt and pepper'
+    ],
+    instructions: [
+      'Sauté or roast veggies with oil, salt, pepper.',
+      'Serve over cooked rice/quinoa.',
+      'Drizzle with soy sauce or your favorite dressing.'
+    ],
+    tips: 'Experiment with roasted chickpeas or tofu for extra protein.'
+  },
+  'buddha-bowl': {
+    name: 'Buddha Bowl',
+    prepTime: '10 minutes',
+    cookTime: '20 minutes',
+    ingredients: [
+      '1 cup cooked quinoa or brown rice',
+      'Roasted veggies (broccoli, sweet potato, etc.)',
+      'Chickpeas or black beans',
+      'Tahini or peanut sauce'
+    ],
+    instructions: [
+      'Roast veggies until tender.',
+      'Combine cooked grains, veggies, and beans in a bowl.',
+      'Top with tahini or peanut sauce.'
+    ],
+    tips: 'Add avocado slices, fresh greens, or roasted nuts/seeds.'
+  },
+  'chefs-special': {
+    name: "Chef's Special",
+    prepTime: '30 minutes',
+    cookTime: '30 minutes',
+    ingredients: [
+      'Varies based on what you have available!',
+      'Pick your favorite protein, veggies, spices'
+    ],
+    instructions: [
+      'Get creative in the kitchen!',
+      'Mix, match, and taste as you go.'
+    ],
+    tips: 'A little experimentation can lead to delicious discoveries!'
+  },
+  // Fallback if no matching key found
+  'stir-fry': {
+    name: 'Veggie Stir-Fry',
+    prepTime: '15 minutes',
+    cookTime: '10 minutes',
+    ingredients: [
+      '2 cups mixed vegetables',
+      '1 block tofu or protein of choice',
+      '3 cloves garlic',
+      'Soy sauce',
+      'Cooking oil'
+    ],
+    instructions: [
+      'Prep all vegetables and protein.',
+      'Heat oil in a wok or large pan.',
+      'Cook protein until golden.',
+      'Add vegetables and stir-fry.',
+      'Add sauce and serve hot.'
+    ],
+    tips: 'Cut all vegetables to similar sizes for even cooking.'
+  }
+};
+
+/* Initialize state */
+let preferences = {
+  dietary: [],
+  hunger: null,
+  craving: null,
+  budget: null,
+  effort: null
+};
+
+let currentQuestionIndex = 0;
+
+/* Wait for DOM to be loaded */
+document.addEventListener('DOMContentLoaded', function() {
+  const questions = Array.from(document.querySelectorAll('.question-card'));
+
+  window.toggleDiet = function(diet, e) {
+    const button = e.target;
+    const isSelected = button.classList.contains('ring-2');
+
+    if (diet === 'none') {
+      // Clear all dietary selections
+      document.querySelectorAll('[data-diet]').forEach((btn) => {
+        btn.classList.remove('ring-2', 'ring-indigo-500');
+      });
+      preferences.dietary = ['none'];
+    } else {
+      // Remove "none" if already selected
+      const noneButton = document.querySelector('[data-diet="none"]');
+      noneButton.classList.remove('ring-2', 'ring-indigo-500');
+
+      // Toggle the clicked button
+      if (isSelected) {
+        button.classList.remove('ring-2', 'ring-indigo-500');
+        preferences.dietary = preferences.dietary.filter((d) => d !== diet);
+      } else {
+        button.classList.add('ring-2', 'ring-indigo-500');
+        if (!preferences.dietary.includes(diet)) {
+          preferences.dietary = preferences.dietary.filter((d) => d !== 'none');
+          preferences.dietary.push(diet);
+        }
+      }
+    }
+  };
+
+  window.confirmDiet = function() {
+    if (preferences.dietary.length === 0) {
+      preferences.dietary = ['none'];
+    }
+    showNextQuestion();
+  };
+
+  window.showNextQuestion = function() {
+    if (currentQuestionIndex < questions.length - 1) {
+      questions[currentQuestionIndex].classList.add('hidden');
+      currentQuestionIndex++;
+      questions[currentQuestionIndex].classList.remove('hidden');
+    }
+  };
+
+  window.addPreference = function(category, value, e) {
+    preferences[category] = value;
+
+    const currentCard = e.target.closest('.question-card');
+    currentCard.querySelectorAll('button').forEach((b) => {
+      b.classList.add('opacity-50');
+      b.disabled = true;
+    });
+    e.target.classList.add('ring-2', 'ring-indigo-500');
+
+    if (currentQuestionIndex < questions.length - 1) {
+      showNextQuestion();
+    } else {
+      showResult();
+    }
+  };
+
+  window.showResult = function() {
+    document.getElementById('question-container').classList.add('hidden');
+    const result = document.getElementById('result');
+    result.classList.remove('hidden');
+
+    // Get food suggestion based on preferences
+    const suggestion = getFoodSuggestion();
+
+    // Update UI with suggestion
+    document.getElementById('food-suggestion').textContent = suggestion.emoji;
+    document.getElementById('description').innerHTML = `
+      <strong>${suggestion.name}</strong><br>${suggestion.description}
+    `;
+
+    // Show recipe if "lots" of effort
+    if (preferences.effort === 'lots') {
+      showRecipeDetails(suggestion.name);
+    }
+  };
+
+  window.getFoodSuggestion = function() {
+    const dietary = preferences.dietary[0] || 'none';
+    const key = `${dietary}-${preferences.craving}-${preferences.budget}-${preferences.effort}`;
+
+    // Try to get exact match
+    let suggestion = foodSuggestions[key];
+
+    // Fallback to default for dietary restriction if not found
+    if (!suggestion) {
+      suggestion = foodSuggestions[`${dietary}-default`] || foodSuggestions['none-default'];
+    }
+    return suggestion;
+  };
+
+  window.showRecipeDetails = function(foodName) {
+    const recipeSection = document.getElementById('recipe-section');
+    recipeSection.classList.remove('hidden');
+
+    // Convert "Ramen" => "ramen", "Jackfruit \"Crab\" Cakes" => "jackfruit-crab-cakes", etc.
+    const recipeKey = foodName
+      .toLowerCase()
+      .replace(/['"]+/g, '') // remove quotes
+      .replace(/[^a-z0-9 ]/g, '') // remove any special chars except spaces
+      .replace(/\s+/g, '-'); // convert spaces to hyphens
+
+    // Look up the recipe; if not found, fall back to stir-fry
+    const recipe = recipes[recipeKey] || recipes['stir-fry'];
+
+    document.getElementById('recipe-name').textContent = recipe.name;
+    document.getElementById('prep-time').textContent = recipe.prepTime;
+    document.getElementById('cook-time').textContent = recipe.cookTime;
+
+    const ingredientsList = document.getElementById('ingredients-list');
+    ingredientsList.innerHTML = recipe.ingredients
+      .map((ingredient) => `<li>${ingredient}</li>`)
+      .join('');
+
+    const instructionsList = document.getElementById('instructions-list');
+    instructionsList.innerHTML = recipe.instructions
+      .map((instruction) => `<li>${instruction}</li>`)
+      .join('');
+
+    document.getElementById('cooking-tips').textContent = recipe.tips;
+  };
+
+  window.resetQuiz = function() {
+    preferences = {
+      dietary: [],
+      hunger: null,
+      craving: null,
+      budget: null,
+      effort: null
+    };
+    currentQuestionIndex = 0;
+
+    questions.forEach((q, index) => {
+      if (index === 0) {
+        q.classList.remove('hidden');
+      } else {
+        q.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('button').forEach((button) => {
+      button.classList.remove('ring-2', 'ring-indigo-500', 'opacity-50');
+      button.disabled = false;
+    });
+
+    document.getElementById('result').classList.add('hidden');
+    document.getElementById('question-container').classList.remove('hidden');
+  };
+});
+</script>
+</body>
+</html>
